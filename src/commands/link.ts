@@ -1,22 +1,19 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command } from '@sapphire/framework';
-import { SlashCommandBuilder } from 'discord.js';
 import { randomBytes } from 'crypto';
 import Redis from 'ioredis';
 
 const redis = new Redis(process.env.REDIS_URL!); // Upstash-compatible
 
-
 @ApplyOptions<Command.Options>({
 	description: 'Generates a code to verify your Minecraft account.'
 })
-export class VerifyCommand extends Command {
+export class UserCommand extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {
-		registry.registerChatInputCommand((builder: SlashCommandBuilder) =>
-			builder
-				.setName('verify')
-				.setDescription('Generates a code to verify your Minecraft account.')
-		);
+		registry.registerChatInputCommand({
+			name: this.name,
+			description: this.description,
+		});
 	}
 
 	public override async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
