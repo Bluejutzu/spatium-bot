@@ -38,6 +38,9 @@ A companion Discord bot for the [Spatium Minecraft plugin](https://github.com/Bl
    # npm
    npm run start
 
+## License
+This project is open source and available under the [MIT License](License).
+
    # pnpm
    pnpm start
    ```
