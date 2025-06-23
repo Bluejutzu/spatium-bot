@@ -6,6 +6,7 @@
 	"license": "UNLICENSE",
 	"type": "commonjs",
 	"dependencies": {
+		"@neondatabase/serverless": "^1.0.1",
 		"@prisma/client": "6.10.1",
 		"@sapphire/decorators": "^6.2.0",
 		"@sapphire/discord.js-utilities": "7.3.3",
