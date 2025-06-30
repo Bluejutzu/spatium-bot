@@ -1,12 +1,16 @@
 import {
 	container,
 	type ChatInputCommandSuccessPayload,
-	type Command,
+	Command,
 	type ContextMenuCommandSuccessPayload,
-	type MessageCommandSuccessPayload
+	type MessageCommandSuccessPayload,
+	CommandOptions,
+	SapphireClient
 } from '@sapphire/framework';
 import { cyan } from 'colorette';
-import type { APIUser, Guild, User } from 'discord.js';
+import type { APIUser, CommandInteraction, Guild, User } from 'discord.js';
+import { ConvexHttpClient } from 'convex/browser';
+import { anyApi } from 'convex/server';
 
 export function logSuccessCommand(payload: ContextMenuCommandSuccessPayload | ChatInputCommandSuccessPayload | MessageCommandSuccessPayload): void {
 	let successLoggerData: ReturnType<typeof getSuccessLoggerData>;
@@ -45,3 +49,78 @@ function getGuildInfo(guild: Guild | null) {
 	if (guild === null) return 'Direct Messages';
 	return `${guild.name}[${cyan(guild.id)}]`;
 }
+
+
+async function fetchAllCommandsFromConvex(convex: ConvexHttpClient, serverId: string) {
+	return await convex.query(anyApi.discord.getCommands, { serverId });
+}
+
+function buildHandler(blocks: any[]) {
+	return async (interaction: CommandInteraction) => {
+		let shouldRun = true;
+		for (const block of blocks) {
+			if (block.type === 'condition') {
+				const { conditionType, conditionValue } = block.config;
+				const input = (interaction as any).options.getString('input', false);
+				if (conditionType === 'message_starts_with' && (!input || !input.startsWith(conditionValue))) {
+					shouldRun = false;
+				}
+				// Add more conditions as needed
+			}
+		}
+		if (!shouldRun) return;
+
+		for (const block of blocks) {
+			if (block.type === 'message') {
+				await interaction.reply(block.config.content);
+			}
+			// Add more block types (embed, role, etc.) as needed
+		}
+	};
+}
+
+// Sapphire command class
+class VisualCommand extends Command {
+	private convex: ConvexHttpClient;
+	private serverId: string;
+	private commandName: string;
+
+	constructor(context: Command.Context, options: CommandOptions, convex: ConvexHttpClient, serverId: string, commandName: string) {
+		super(context, {
+			...options,
+			name: commandName,
+			description: 'Generated from visual builder',
+			
+		});
+		this.convex = convex;
+		this.serverId = serverId;
+		this.commandName = commandName;
+	}
+
+	override async chatInputRun(interaction: CommandInteraction) {
+		// Fetch the command from Convex
+		const commands = await fetchAllCommandsFromConvex(this.convex, this.serverId);
+		console.log(commands)
+		const cmd = commands.find((c: any) => c.name === this.commandName);
+		if (!cmd) return;
+		const handler = buildHandler(JSON.parse(cmd.blocks));
+		await handler(interaction);
+	}
+}
+
+async function registerAllVisualCommands(client: SapphireClient, convex: ConvexHttpClient, serverId: string) {
+	const commands = await fetchAllCommandsFromConvex(convex, serverId);
+	const commandStore = client.stores.get('commands');
+	for (const cmd of commands) {
+		const context = {
+			name: cmd.name,
+			path: __filename,
+			root: process.cwd(),
+			store: commandStore
+		};
+		const visualCmd = new VisualCommand(context, {}, convex, serverId, cmd.name);
+		commandStore.set(visualCmd.name, visualCmd);
+	}
+}
+
+export { VisualCommand, registerAllVisualCommands }; 
