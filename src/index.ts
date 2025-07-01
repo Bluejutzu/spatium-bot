@@ -1,25 +1,36 @@
 import './lib/setup';
 
-import { LogLevel, SapphireClient } from '@sapphire/framework';
+import { LogLevel, SapphireClient, container } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
-import { registerAllVisualCommands } from './lib/utils';
 import { ConvexHttpClient } from 'convex/browser';
 
-import 'dotenv/config'
+import 'dotenv/config';
+
+const convex = new ConvexHttpClient(process.env.CONVEX_URL!);
+// @ts-expect-error: augment container with convex property
+container.convex = convex;
+// @ts-expect-error: augment container with serverId property
+container.serverId = '1168532822563233847';
 
 const client = new SapphireClient({
 	defaultPrefix: '!',
+	regexPrefix: /^(hey +)?bot[,! ]/i,
 	caseInsensitiveCommands: true,
 	logger: {
 		level: LogLevel.Debug
 	},
-	intents: [GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent],
+	shards: 'auto',
+	intents: [
+		GatewayIntentBits.DirectMessages,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.MessageContent
+	],
 	loadMessageCommandListeners: true
 });
 
 const main = async () => {
-	const convex = new ConvexHttpClient(process.env.CONVEX_URL!);
-	await registerAllVisualCommands(client, convex, '1168532822563233847');
 	try {
 		client.logger.info('Logging in');
 		await client.login();

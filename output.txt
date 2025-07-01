@@ -1,0 +1,56 @@
+2025-07-01 20:05:47 - INFO  - Logging in
+2025-07-01 20:05:48 - INFO  - logged in
+2025-07-01 20:05:48 - INFO  - ApplicationCommandRegistries: Initializing...
+ █ █   █ █ █   █ █   █   █        1.0.0
+ █ █   █ █ █   █ █   █   █        [+] Gateway
+ █ █   █ █ █   █ █   █   █
+ █ █   █ █ █   █ █   █   █        <>/ DEVELOPMENT MODE
+ █ █   █ █ █   █ █   █   █
+ █ █   █ █ █   █ █   █   █
+ █ █   █ █ █   █ █   █   █
+2025-07-01 20:05:48 - INFO  - ├─ Loaded 27  arguments.
+2025-07-01 20:05:48 - INFO  - ├─ Loaded 4   commands.
+2025-07-01 20:05:48 - INFO  - ├─ Loaded 0   interaction-handlers.
+2025-07-01 20:05:48 - INFO  - ├─ Loaded 32  listeners.
+2025-07-01 20:05:48 - INFO  - └─ Loaded 15  preconditions.
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistries(BulkOverwrite) Overwriting global application commands, now at 7 commands
+2025-07-01 20:05:48 - INFO  - Fetched 1 visual commands from Convex.
+2025-07-01 20:05:48 - INFO  - Successfully loaded visual command: "test"
+2025-07-01 20:05:48 - INFO  - Client is ready, proceeding with command registration refresh.
+[
+  {
+    _creationTime: 1751314603652.1868,
+    _id: 'k170yaajjkz86b0c3zgw93bc8h7jten1',
+    blocks: '[{"type":"message","label":"Message","id":1751314535054.3542,"config":{"components":[{"type":"select","label":"","style":"primary","custom_id":"select_menu-placeholder","placeholder":"Select Menu Placeholder","options":[{"label":"Option 1","value":"Somethng"}]},{"type":"button","label":"Button","style":"primary","custom_id":"btton_lol"}],"flags":"EPHEMERAL","content":"Message Content Block"}}]',
+    name: 'test',
+    serverId: '1168532822563233847'
+  }
+]
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[link] Registering id "1388785934601814036" to internal chat input map
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[ping] Registering id "1388785934601814037" to internal chat input map
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[ping] Registering id "1388785934601814038" to internal context menu map
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[ping] Registering id "1388785934601814039" to internal context menu map
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[unlink] Registering id "1388785934601814040" to internal chat input map
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[whois] Registering id "1386033084930981901" to internal chat input map
+2025-07-01 20:05:48 - DEBUG - ApplicationCommandRegistry[whois] Registering id "1386033085484896447" to internal context menu map
+2025-07-01 20:05:48 - INFO  - ApplicationCommandRegistries(BulkOverwrite) Successfully overwrote global application commands. The application now has 7 global commands
+2025-07-01 20:05:48 - INFO  - ApplicationCommandRegistries: Took 521ms to initialize.
+2025-07-01 20:05:49 - ERROR - An error occurred during visual command registration: DiscordAPIError[50035]: Invalid Form Body
+2025-07-01 20:05:49 - ERROR - 0.description[BASE_TYPE_REQUIRED]: This field is required
+2025-07-01 20:05:49 - ERROR -     at handleErrors (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\@discordjs+rest@2.5.1\node_modules\@discordjs\rest\dist\index.js:748:13)
+2025-07-01 20:05:49 - ERROR -     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-01 20:05:49 - ERROR -     at async SequentialHandler.runRequest (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\@discordjs+rest@2.5.1\node_modules\@discordjs\rest\dist\index.js:1149:23)
+2025-07-01 20:05:49 - ERROR -     at async SequentialHandler.queueRequest (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\@discordjs+rest@2.5.1\node_modules\@discordjs\rest\dist\index.js:980:14)
+2025-07-01 20:05:49 - ERROR -     at async _REST.request (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\@discordjs+rest@2.5.1\node_modules\@discordjs\rest\dist\index.js:1293:22)
+2025-07-01 20:05:49 - ERROR -     at async ApplicationCommandManager.set (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\discord.js@14.20.0\node_modules\discord.js\src\managers\ApplicationCommandManager.js:171:18)
+2025-07-01 20:05:49 - ERROR -     at async registerAllVisualCommands (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\dist\lib\utils.js:324:13)      
+2025-07-01 20:05:49 - ERROR -     at async UserEvent.run (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\dist\listeners\ready.js:24:9)
+2025-07-01 20:05:49 - ERROR -     at async Result.fromAsync (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\@sapphire+result@2.7.2\node_modules\@sapphire\result\dist\cjs\index.cjs:957:22)
+2025-07-01 20:05:49 - ERROR -     at async UserEvent._run (C:\Users\Bluejutzu\feinfeinfein\spatium-bot\node_modules\.pnpm\@sapphire+framework@5.3.6\node_modules\@sapphire\framework\dist\cjs\lib\structures\Listener.cjs:26:22) {
+2025-07-01 20:05:49 - ERROR -   requestBody: [Object],
+2025-07-01 20:05:49 - ERROR -   rawError: [Object],
+2025-07-01 20:05:49 - ERROR -   code: 50035,
+2025-07-01 20:05:49 - ERROR -   status: 400,
+2025-07-01 20:05:49 - ERROR -   method: 'PUT',
+2025-07-01 20:05:49 - ERROR -   url: 'https://discord.com/api/v10/applications/1384798729055375410/commands' 
+2025-07-01 20:05:49 - ERROR - }

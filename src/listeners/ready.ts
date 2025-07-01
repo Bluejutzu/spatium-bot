@@ -1,16 +1,29 @@
-import { ApplyOptions } from '@sapphire/decorators';
-import { Listener, StoreRegistryValue } from '@sapphire/framework';
+import { Listener, Store, Piece, Events } from '@sapphire/framework';
 import { blue, gray, green, magenta, magentaBright, white, yellow } from 'colorette';
+import { registerAllVisualCommands } from '../lib/utils';
 
 const dev = process.env.NODE_ENV !== 'production';
 
-@ApplyOptions<Listener.Options>({ once: true })
-export class UserEvent extends Listener {
+export class UserEvent extends Listener<typeof Events.ClientReady> {
 	private readonly style = dev ? yellow : blue;
 
-	public override run() {
+	public constructor(context: Listener.LoaderContext, options: Listener.Options) {
+		super(context, {
+			...options,
+			once: true
+		});
+	}
+
+	public async run() {
 		this.printBanner();
 		this.printStoreDebugInformation();
+		await registerAllVisualCommands(
+			this.container.client,
+			// @ts-expect-error: convex is injected at runtime
+			this.container['convex'],
+			// @ts-expect-error: serverId is injected at runtime
+			this.container['serverId']
+		);
 	}
 
 	private printBanner() {
@@ -19,9 +32,13 @@ export class UserEvent extends Listener {
 		const llc = dev ? magentaBright : white;
 		const blc = dev ? magenta : blue;
 
-		const line01 = llc('');
-		const line02 = llc('');
-		const line03 = llc('');
+		const line01 = llc(' █ █   █ █ █   █ █   █   █');
+		const line02 = llc(' █ █   █ █ █   █ █   █   █');
+		const line03 = llc(' █ █   █ █ █   █ █   █   █');
+		const line04 = llc(' █ █   █ █ █   █ █   █   █');
+		const line05 = llc(' █ █   █ █ █   █ █   █   █');
+		const line06 = llc(' █ █   █ █ █   █ █   █   █');
+		const line07 = llc(' █ █   █ █ █   █ █   █   █');
 
 		// Offset Pad
 		const pad = ' '.repeat(7);
@@ -30,8 +47,12 @@ export class UserEvent extends Listener {
 			String.raw`
 ${line01} ${pad}${blc('1.0.0')}
 ${line02} ${pad}[${success}] Gateway
-${line03}${dev ? ` ${pad}${blc('<')}${llc('/')}${blc('>')} ${llc('DEVELOPMENT MODE')}` : ''}
-		`.trim()
+${line03}
+${line04} ${pad}${blc('<>/ DEVELOPMENT MODE')}
+${line05}
+${line06}
+${line07}
+			`.trim()
 		);
 	}
 
@@ -44,7 +65,7 @@ ${line03}${dev ? ` ${pad}${blc('<')}${llc('/')}${blc('>')} ${llc('DEVELOPMENT MO
 		logger.info(this.styleStore(last, true));
 	}
 
-	private styleStore(store: StoreRegistryValue, last: boolean) {
+	private styleStore(store: Store<Piece>, last: boolean) {
 		return gray(`${last ? '└─' : '├─'} Loaded ${this.style(store.size.toString().padEnd(3, ' '))} ${store.name}.`);
 	}
 }
