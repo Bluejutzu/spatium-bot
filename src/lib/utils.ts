@@ -70,7 +70,29 @@ async function fetchAllCommandsFromConvex(convex: ConvexHttpClient, serverId: st
 	}
 }
 
-// Enhanced component builder
+// --- Node/Edge Types for Visual Command System ---
+export interface VisualNode {
+	id: string;
+	type: string;
+	position: { x: number; y: number };
+	data: {
+		label: string;
+		type: string;
+		config: any;
+	};
+	draggable?: boolean;
+}
+
+export interface VisualEdge {
+	id: string;
+	source: string;
+	target: string;
+	sourceHandle?: string;
+	targetHandle?: string;
+	type?: string;
+}
+
+// Add a local buildComponents function for Discord.js components
 function buildComponents(components: any[]): ActionRowBuilder<any>[] {
 	const rows: ActionRowBuilder<any>[] = [];
 	let currentRow = new ActionRowBuilder();
@@ -87,14 +109,10 @@ function buildComponents(components: any[]): ActionRowBuilder<any>[] {
 			const button = new ButtonBuilder()
 				.setCustomId(component.custom_id)
 				.setLabel(component.label)
-				.setStyle(getButtonStyle(component.style));
+				.setStyle(component.style || ButtonStyle.Primary);
 
-			if (component.emoji) {
-				button.setEmoji(component.emoji);
-			}
-			if (component.disabled) {
-				button.setDisabled(true);
-			}
+			if (component.emoji) button.setEmoji(component.emoji);
+			if (component.disabled) button.setDisabled(true);
 
 			currentRow.addComponents(button);
 			componentsInRow++;
@@ -119,145 +137,76 @@ function buildComponents(components: any[]): ActionRowBuilder<any>[] {
 			if (component.disabled) selectMenu.setDisabled(true);
 
 			currentRow.addComponents(selectMenu);
-			componentsInRow = 5; // Select menus take full row
+			componentsInRow = 5;
 		}
 	}
 
-	if (componentsInRow > 0) {
-		rows.push(currentRow);
-	}
-
+	if (componentsInRow > 0) rows.push(currentRow);
 	return rows;
 }
 
-function getButtonStyle(style: string): ButtonStyle {
-	switch (style?.toLowerCase()) {
-		case 'primary':
-			return ButtonStyle.Primary;
-		case 'secondary':
-			return ButtonStyle.Secondary;
-		case 'success':
-			return ButtonStyle.Success;
-		case 'danger':
-			return ButtonStyle.Danger;
-		case 'link':
-			return ButtonStyle.Link;
-		default:
-			return ButtonStyle.Primary;
+// Traverse the node graph and execute actions
+async function executeNodeGraph(nodes: VisualNode[], edges: VisualEdge[], interaction: ChatInputCommandInteraction) {
+	const nodeMap = new Map(nodes.map(n => [n.id, n]));
+	const edgeMap = new Map<string, VisualEdge[]>();
+	edges.forEach((e: VisualEdge) => {
+		if (!edgeMap.has(e.source)) edgeMap.set(e.source, []);
+		edgeMap.get(e.source)!.push(e);
+	});
+
+	// Find root node
+	const root = nodes.find(n => n.type === 'root');
+	if (!root) throw new Error('No root node found');
+
+	let currentNode: VisualNode | undefined = root;
+	let visited = new Set<string>();
+
+	while (currentNode && !visited.has(currentNode.id)) {
+		visited.add(currentNode.id);
+		const { type, config } = currentNode.data;
+
+		// Handle node types
+		switch (type) {
+			case 'root':
+				// Start node, move to next
+				break;
+			case 'send-message': {
+				const { content, embeds, components, ephemeral } = config;
+				await interaction.reply({
+					content: content || undefined,
+					embeds: embeds || undefined,
+					components: components ? buildComponents(components) : undefined,
+					ephemeral: !!ephemeral,
+				});
+				break;
+			}
+			case 'condition': {
+				const { conditionType, roleId } = config;
+				let result = false;
+				if (conditionType === 'user-has-role') {
+					const member = interaction.guild?.members.cache.get(interaction.user.id);
+					result = !!(member && member.roles.cache.has(roleId));
+				}
+				const outgoing = edgeMap.get(currentNode.id) || [];
+				const nextEdge = outgoing.find(e => e.sourceHandle === (result ? 'true' : 'false'));
+				if (nextEdge) {
+					currentNode = nodeMap.get(nextEdge.target);
+					continue;
+				}
+				break;
+			}
+			default:
+				break;
+		}
+		const outgoing = edgeMap.get(currentNode.id) || [];
+		if (outgoing.length > 0) {
+			currentNode = nodeMap.get(outgoing[0].target);
+		} else {
+			currentNode = undefined;
+		}
 	}
 }
 
-// Enhanced command handler
-function buildHandler(blocks: any[]) {
-	return async (interaction: ChatInputCommandInteraction) => {
-		try {
-			let shouldRun = true;
-
-			// Process condition blocks first
-			for (const block of blocks) {
-				if (block.type === 'condition') {
-					const { conditionType, conditionValue } = block.config;
-
-					switch (conditionType) {
-						case 'message_starts_with': {
-							const input = interaction.options.getString('input', false);
-							if (!input || !input.startsWith(conditionValue)) {
-								shouldRun = false;
-							}
-							break;
-						}
-						case 'user_has_role': {
-							const member = interaction.guild?.members.cache.get(interaction.user.id);
-							if (!member || !member.roles.cache.has(conditionValue)) {
-								shouldRun = false;
-							}
-							break;
-						}
-						case 'channel_type': {
-							if (interaction.channel?.type.toString() !== conditionValue) {
-								shouldRun = false;
-							}
-							break;
-						}
-					}
-				}
-			}
-
-			if (!shouldRun) {
-				await interaction.reply({
-					content: 'You do not meet the requirements to use this command.',
-					ephemeral: true
-				});
-				return;
-			}
-
-			// Process action blocks
-			for (const block of blocks) {
-				switch (block.type) {
-					case 'message': {
-						const { content, components, flags, embeds } = block.config;
-
-						const replyOptions: any = {
-							content: content || undefined,
-							ephemeral: flags === 'EPHEMERAL'
-						};
-
-						if (components && components.length > 0) {
-							replyOptions.components = buildComponents(components);
-						}
-
-						if (embeds && embeds.length > 0) {
-							replyOptions.embeds = embeds;
-						}
-
-						if (interaction.replied || interaction.deferred) {
-							await interaction.followUp(replyOptions);
-						} else {
-							await interaction.reply(replyOptions);
-						}
-						break;
-					}
-					case 'role_add': {
-						const { roleId } = block.config;
-						const member = interaction.guild?.members.cache.get(interaction.user.id);
-						if (member && roleId) {
-							await member.roles.add(roleId);
-						}
-						break;
-					}
-					case 'role_remove': {
-						const { roleId } = block.config;
-						const member = interaction.guild?.members.cache.get(interaction.user.id);
-						if (member && roleId) {
-							await member.roles.remove(roleId);
-						}
-						break;
-					}
-					case 'delay': {
-						const { duration } = block.config;
-						await new Promise((resolve) => setTimeout(resolve, duration * 1000));
-						break;
-					}
-				}
-			}
-		} catch (error) {
-			container.logger.error('Error executing visual command:', error);
-
-			const errorMessage = {
-				content: 'An error occurred while executing this command.',
-				ephemeral: true
-			};
-
-			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp(errorMessage);
-			} else {
-				await interaction.reply(errorMessage);
-			}
-		}
-	};
-}
-
-// Enhanced Sapphire command class
 class VisualCommand extends Command {
 	private convex: ConvexHttpClient;
 	private serverId: string;
@@ -282,7 +231,7 @@ class VisualCommand extends Command {
 	}
 
 	public override registerApplicationCommands(registry: Command.Registry) {
-		registry.registerChatInputCommand((builder) =>
+		registry.registerChatInputCommand((builder: any) =>
 			builder //
 				.setName(this.name)
 				.setDescription(this.description)
@@ -291,7 +240,6 @@ class VisualCommand extends Command {
 
 	override async chatInputRun(interaction: ChatInputCommandInteraction) {
 		try {
-			// Fetch the command from Convex
 			const commands = await fetchAllCommandsFromConvex(this.convex, this.serverId);
 			const cmd = commands.find((c: any) => c.name === this.commandName);
 
@@ -303,9 +251,20 @@ class VisualCommand extends Command {
 				return;
 			}
 
-			const blocks = typeof cmd.blocks === 'string' ? JSON.parse(cmd.blocks) : cmd.blocks;
-			const handler = buildHandler(blocks);
-			await handler(interaction);
+			let nodes: VisualNode[] = [];
+			let edges: VisualEdge[] = [];
+			if (typeof cmd.blocks === 'string') {
+				try {
+					const parsed = JSON.parse(cmd.blocks);
+					nodes = parsed.nodes || [];
+					edges = parsed.edges || [];
+				} catch (e: unknown) {
+					await interaction.reply({ content: 'Failed to parse command blocks.', ephemeral: true });
+					return;
+				}
+			}
+
+			await executeNodeGraph(nodes, edges, interaction);
 		} catch (error) {
 			container.logger.error(`Error in visual command ${this.commandName}:`, error);
 			await interaction.reply({
@@ -316,7 +275,6 @@ class VisualCommand extends Command {
 	}
 }
 
-// Enhanced registration function using Sapphire's registry outside the command class
 async function registerAllVisualCommands(client: SapphireClient, convex: ConvexHttpClient, serverId: string) {
 	const commandStore = client.stores.get('commands');
 	if (!commandStore) {
@@ -378,22 +336,15 @@ async function registerAllVisualCommands(client: SapphireClient, convex: ConvexH
 	}
 }
 
-// Component interaction handler (add this to your main bot file)
 export function setUpComponentHandlers(client: SapphireClient, _convex: ConvexHttpClient) {
 	client.on('interactionCreate', async (interaction) => {
 		if (!interaction.isButton() && !interaction.isStringSelectMenu()) return;
 
 		try {
-			// Handle custom component interactions here
-			// You can extend this based on your visual builder needs
 
 			if (interaction.customId.startsWith('visual_')) {
-				// Handle visual builder component interactions
 				const serverId = interaction.guildId;
 				if (!serverId) return;
-
-				// Fetch command data and handle component interactions
-				// This is where you'd implement your component logic
 			}
 		} catch (error) {
 			container.logger.error('Error handling component interaction:', error);

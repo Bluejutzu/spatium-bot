@@ -2,31 +2,10 @@
     {
         "type": "message",
         "label": "Message",
-        "id": 1751314535054.3542,
+        "id": 1751394120267.2932,
         "config": {
-            "components": [
-                {
-                    "type": "select",
-                    "label": "",
-                    "style": "primary",
-                    "custom_id": "select_menu-placeholder",
-                    "placeholder": "Select Menu Placeholder",
-                    "options": [
-                        {
-                            "label": "Option 1",
-                            "value": "Somethng"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "label": "Button",
-                    "style": "primary",
-                    "custom_id": "btton_lol"
-                }
-            ],
-            "flags": "EPHEMERAL",
-            "content": "Message Content Block"
+            "content": "I liek femobys",
+            "components": []
         }
     }
 ]
