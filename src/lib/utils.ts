@@ -189,8 +189,10 @@ async function executeNodeGraph(nodes: VisualNode[], edges: VisualEdge[], intera
 				}
 				const outgoing = edgeMap.get(currentNode.id) || [];
 				const nextEdge = outgoing.find(e => e.sourceHandle === (result ? 'true' : 'false'));
+				console.log(outgoing, nextEdge)
 				if (nextEdge) {
 					currentNode = nodeMap.get(nextEdge.target);
+					console.log(currentNode)
 					continue;
 				}
 				break;
