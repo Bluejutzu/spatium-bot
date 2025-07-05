@@ -338,7 +338,7 @@ async function registerAllVisualCommands(client: SapphireClient, convex: ConvexH
 	}
 }
 
-export function setUpComponentHandlers(client: SapphireClient, _convex: ConvexHttpClient) {
+export function setUpComponentHandlers(client: SapphireClient) {
 	client.on('interactionCreate', async (interaction) => {
 		if (!interaction.isButton() && !interaction.isStringSelectMenu()) return;
 

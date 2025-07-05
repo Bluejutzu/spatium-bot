@@ -2,11 +2,9 @@ import './lib/setup';
 
 import { LogLevel, SapphireClient, container } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
-import { ConvexHttpClient } from 'convex/browser';
 
 import 'dotenv/config';
 
-const convex = new ConvexHttpClient(process.env.CONVEX_URL!);
 // @ts-expect-error: augment container with convex property
 container.convex = convex;
 // @ts-expect-error: augment container with serverId property

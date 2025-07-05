@@ -1,6 +1,5 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { ApplicationCommandRegistry, Awaitable, Command, UserError } from '@sapphire/framework';
-import axios from 'axios';
 import {
 	ApplicationCommandType,
 	ApplicationIntegrationType,
@@ -12,18 +11,7 @@ import {
 	MessageFlags,
 	TextDisplayBuilder,
 	ContainerBuilder,
-	MediaGalleryBuilder
 } from 'discord.js';
-import { db } from '../db';
-
-interface MojangProfile {
-	id: string;
-	name: string;
-	properties: {
-		name: string;
-		value: string;
-	}[];
-}
 
 @ApplyOptions<Command.Options>({
 	description: "Gets a user's info",
@@ -124,54 +112,6 @@ export class UserCommand extends Command {
 			.addTextDisplayComponents(new TextDisplayBuilder().setContent(generalSection))
 			.addTextDisplayComponents(new TextDisplayBuilder().setContent(serverSection))
 			.addTextDisplayComponents(new TextDisplayBuilder().setContent(rolesSection));
-
-		const dbUser = await db.users.findUnique({ where: { discord_id: user.id } });
-		if (dbUser?.mojang_uuid) {
-			try {
-				const mojangUUID = dbUser.mojang_uuid.replace(/-/g, '');
-				const profileRes = await axios.get<MojangProfile>(
-					`https://sessionserver.mojang.com/session/minecraft/profile/${mojangUUID}`
-				);
-
-				if (profileRes.status === 200) {
-					const profile = profileRes.data;
-					const textures = JSON.parse(Buffer.from(profile.properties[0].value, 'base64').toString());
-
-					container.addTextDisplayComponents(
-						new TextDisplayBuilder().setContent(
-							[
-								'### ⛏️ Minecraft Account',
-								`**Username:** ${profile.name}`,
-								`**UUID:** ${inlineCode(profile.id)}`,
-								`**[Download Skin](${textures.textures.SKIN.url})**`
-							].join('\n')
-						)
-					);
-				}
-			} catch (err) {
-				this.container.logger.warn('Failed to fetch Mojang profile:', err);
-				container.addTextDisplayComponents(
-					new TextDisplayBuilder().setContent(`⛏️ No Minecraft account found linked to ${user.tag}.`)
-				);
-			}
-		}
-
-
-		if (bannerUrl) {
-			const bannerMediaComponent = new MediaGalleryBuilder({
-				items: [
-					{
-						description: `${user.username}'s banner`,
-						media: {
-							url: bannerUrl,
-						}
-					}
-				]
-			})
-			container.addMediaGalleryComponents([
-				bannerMediaComponent
-			]);
-		}
 
 		await interaction.editReply({
 			components: [container],
